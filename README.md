@@ -31,6 +31,16 @@ When write is finished the camera and SD card are uninitialized, the wake up tim
 - SE toolkit and services v1.0.94
   - Remember to update the system package using SE toolkit updateSystemPackage
 
+## Programming
+- Please note when programming target using SE tools, the connection fails if the SoC is in stop mode
+- You can try to hit the right time window when the power is on, but it can be too tricky.
+- Better option is to use the SE tools maintenance tool to stop the application
+  - execute maintenance tool
+  - choose 1-Device Control, 1-Hard maintenance mode
+  - press reset button on board
+  - exit maintenance tool
+  - program the target
+
 ## Demo notes
 - SD card performance
     - On DevKit board there is no possibility to control SD card power from software
