@@ -245,11 +245,15 @@ void snapshot_thread_entry(ULONG args)
 {
     int ret = 0;
 
-    // TODO: with higher framerate the rtc value does not work
-    int frame_id = get_rtc_value();
-
+    printf("camera_init\n");
     ret = camera_init();
     printf("camera_init done, ret=%d\n", ret);
+
+    // Camera needs some warm up time. Otherwise picture is dark
+    sys_busy_loop_us(10000);
+
+    // TODO: with higher framerate the rtc value does not work
+    int frame_id = get_rtc_value();
 
     /* Open the SD disk. and initialize SD controller */
     uint32_t fx_media_status = fx_media_open(&sd_card, "SD_DISK", _fx_sd_driver, 0, (VOID *)media_memory, sizeof(media_memory));

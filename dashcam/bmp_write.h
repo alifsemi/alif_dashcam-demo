@@ -19,7 +19,7 @@
 
 #include "fx_api.h"
 
-#define ROW_BUFFER_SIZE (1024 * 6)
+#define ROW_BUFFER_SIZE (1024 * 64)
 static uint8_t rowbuffer[ROW_BUFFER_SIZE] __attribute__((section(".bss.camera_frame_bayer_to_rgb_buf"))) __attribute__((aligned(32)));
 
 #pragma pack(1)
@@ -77,7 +77,7 @@ bool bmp_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_
     static const uint32_t bytes_per_pixel = 3;
     uint32_t pad_bytes = 4 - ((width * 3) % 4);
     if (pad_bytes == 4) { pad_bytes = 0; }
-    uint32_t row_bytes = width * bytes_per_pixel + pad_bytes;
+    const uint32_t row_bytes = width * bytes_per_pixel + pad_bytes;
     file_header.id[0] = 'B';
     file_header.id[1] = 'M';
     write_le32(file_header.file_size, row_bytes * height + sizeof(file_header) + sizeof(info_header));
@@ -105,20 +105,14 @@ bool bmp_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_
     // Write BMP info header
     ret = ret && fx_file_write(image_file, &info_header, sizeof(info_header)) == FX_SUCCESS;
     
-    // Write BGR pixel data using filebuffer
+    // Write BGR pixel data
+    const int n_buffered_rows_max = ROW_BUFFER_SIZE / row_bytes;
+    int n_buffered_rows = 0;
     uint8_t *row_bgr_ptr = rowbuffer;
-
-    // Clear row padding bytes
-    row_bgr_ptr[row_bytes - 4] = 0;
-    row_bgr_ptr[row_bytes - 3] = 0;
-    row_bgr_ptr[row_bytes - 2] = 0;
-    row_bgr_ptr[row_bytes - 1] = 0;
-
     // Write row by row (BMP defaults to bottom row first)
     for (int row = height -1; ret && (row >= 0); row--) {
 
         // Convert to BGR
-        row_bgr_ptr = rowbuffer;
         const uint8_t *row_rgb_ptr = &pixel_data[row * width * bytes_per_pixel];
         for (uint32_t col = 0; col < width; col++) {
             *row_bgr_ptr++ = row_rgb_ptr[2];
@@ -127,10 +121,23 @@ bool bmp_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_
             row_rgb_ptr += 3;
         }
 
-        // Write out the row
-        ret = ret && fx_file_write(image_file, rowbuffer, row_bytes) == FX_SUCCESS;
+        for (uint32_t ii = 0; ii < pad_bytes; ii++) {
+            *row_bgr_ptr++ = 0;
+        }
+
+        n_buffered_rows++;
+        // Write out the buffered rows
+        if (n_buffered_rows == n_buffered_rows_max) {
+            ret = ret && fx_file_write(image_file, rowbuffer, row_bytes * n_buffered_rows) == FX_SUCCESS;
+            n_buffered_rows = 0;
+            row_bgr_ptr = rowbuffer;
+        }
     }
     
+    if (n_buffered_rows > 0) {
+        ret = ret && fx_file_write(image_file, rowbuffer, row_bytes * n_buffered_rows) == FX_SUCCESS;
+    }
+
     return ret;
 }
 

@@ -21,12 +21,6 @@ When write is finished the camera and SD card are uninitialized, the wake up tim
 
 ## Build notes
 - CMSIS Pack version Ensemble 1.1.3
-  - **NOTE** The pack needs a minor edit in `sd_host.h` header file!
-  - With the default environment you can find the file from `C:\Users\<user>\AppData\Local\arm\packs\AlifSemiconductor\Ensemble\1.1.3\drivers\include\sd_host.h`
-  - Set the SD clock to 12.5MHz (defaults to 25MHz)
-```
-  #define SDMMC_OP_FREQ_SEL                       SDMMC_CLK_12_5MHz_DIV
-```
 - AzureRTOS pack 1.1.0
 - SE toolkit and services v1.0.94
   - Remember to update the system package using SE toolkit updateSystemPackage
