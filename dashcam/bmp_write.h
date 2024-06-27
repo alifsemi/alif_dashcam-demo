@@ -16,8 +16,10 @@
 #define BMP_WRITE_H
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "fx_api.h"
+#include "jpeglib.h"
 
 #define ROW_BUFFER_SIZE (1024 * 64)
 static uint8_t rowbuffer[ROW_BUFFER_SIZE] __attribute__((section(".bss.camera_frame_bayer_to_rgb_buf"))) __attribute__((aligned(32)));
@@ -139,6 +141,44 @@ bool bmp_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_
     }
 
     return ret;
+}
+
+// TODO: Support writing images bigger than compress buffer (rowbuffer)
+bool jpeg_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_t height)
+{
+    struct jpeg_error_mgr jerr;
+    struct jpeg_compress_struct cinfo;
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+
+    cinfo.image_width = width;
+    cinfo.image_height = height;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_RGB;
+
+    jpeg_set_defaults(&cinfo);
+
+    cinfo.dct_method = JDCT_FASTEST;
+
+    jpeg_set_quality(&cinfo, 75, TRUE);
+
+    uint8_t* pjb = rowbuffer;
+    uint32_t jbsz = sizeof(rowbuffer);
+    jpeg_mem_dest(&cinfo, &pjb, &jbsz);
+
+
+    jpeg_start_compress(&cinfo, TRUE);
+
+    while (cinfo.next_scanline < cinfo.image_height) {
+        JSAMPROW jsamp = pixel_data + (cinfo.next_scanline % cinfo.image_height) * width * 3;
+        jpeg_write_scanlines(&cinfo, &jsamp, 1);
+    }
+
+    jpeg_finish_compress(&cinfo);
+    size_t jpeg_bytes = sizeof(rowbuffer) - cinfo.dest->free_in_buffer;
+
+    return cinfo.err->msg_code == 0 &&
+           fx_file_write(image_file, rowbuffer, jpeg_bytes) == FX_SUCCESS;
 }
 
 #endif // BMP_WRITE_H

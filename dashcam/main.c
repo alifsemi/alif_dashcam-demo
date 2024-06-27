@@ -190,6 +190,7 @@ void clock_init(bool enable)
 }
 
 
+
 bool save_image(char* filename, uint8_t *pixel_data, uint32_t width, uint32_t height)
 {
     uint32_t status = fx_file_create(&sd_card, filename);
@@ -217,11 +218,19 @@ bool save_image(char* filename, uint8_t *pixel_data, uint32_t width, uint32_t he
         return false;
     }
 
+#if 0
     if (!bmp_write(&image_file, pixel_data, width, height)) {
         printf("Failed writing '%s' in BMP format\n", filename);
         fx_file_close(&image_file);
         return false;
     }
+#else
+    if (!jpeg_write(&image_file, pixel_data, width, height)) {
+        printf("Failed writing '%s' in JPEG format\n", filename);
+        fx_file_close(&image_file);
+        return false;
+    }
+#endif
 
     status = fx_file_close(&image_file);
     if (status != FX_SUCCESS)
@@ -240,6 +249,7 @@ bool save_image(char* filename, uint8_t *pixel_data, uint32_t width, uint32_t he
     printf("Successfully wrote '%s'\n", filename);
     return true;
 }
+
 
 void snapshot_thread_entry(ULONG args)
 {
@@ -280,7 +290,7 @@ void snapshot_thread_entry(ULONG args)
         
         if (fx_media_status == FX_SUCCESS) {
             char filename[32];
-            snprintf(filename, 32, "frame_%06u.bmp", frame_id);
+            snprintf(filename, 32, "frame_%06u.jpg", frame_id);
             BOARD_LED2_Control(BOARD_LED_STATE_HIGH);
             save_image(filename, image_buffer, CAM_FRAME_WIDTH, CAM_FRAME_HEIGHT);
             BOARD_LED2_Control(BOARD_LED_STATE_LOW);
