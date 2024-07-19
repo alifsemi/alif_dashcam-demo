@@ -7,15 +7,15 @@
             "windows": {
                 "command": [
                     "cbuild ${command:cmsis-csolution.getSolutionPath} --clean;",
-                    "rm -Force ./viewfinder/*.cbuild.yml;",
-                    "rm -Force ./viewfinder/*.cprj;",
+                    "rm -Force ./dashcam/*.cbuild.yml;",
+                    "rm -Force ./dashcam/*.cprj;",
                 ]
             },
             "linux": {
                 "command": [
                     "cbuild ${command:cmsis-csolution.getSolutionPath} --clean;",
-                    "rm -f ./viewfinder/*.cbuild.yml;",
-                    "rm -f ./viewfinder/*.cprj;",
+                    "rm -f ./dashcam/*.cbuild.yml;",
+                    "rm -f ./dashcam/*.cprj;",
                 ]
             },
             "problemMatcher": []
