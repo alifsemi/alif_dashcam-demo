@@ -15,6 +15,80 @@ project:
         - file: ../libs/common_app_utils/logging/uart_tracelib.c
         - file: ../libs/common_app_utils/logging/retarget.c
 
+    - group: libjpeg-turbo
+      files:
+        - file: ../libs/alif_libjpeg-turbo/jcapistd.c
+        - file: ../libs/alif_libjpeg-turbo/jccoefct.c
+        - file: ../libs/alif_libjpeg-turbo/jccolor.c
+        - file: ../libs/alif_libjpeg-turbo/jcapimin.c
+        - file: ../libs/alif_libjpeg-turbo/jcdctmgr.c
+        - file: ../libs/alif_libjpeg-turbo/jchuff.c
+        - file: ../libs/alif_libjpeg-turbo/jcicc.c
+        - file: ../libs/alif_libjpeg-turbo/jcinit.c
+        - file: ../libs/alif_libjpeg-turbo/jcmainct.c
+        - file: ../libs/alif_libjpeg-turbo/jcmarker.c
+        - file: ../libs/alif_libjpeg-turbo/jcmaster.c
+        - file: ../libs/alif_libjpeg-turbo/jcomapi.c
+        - file: ../libs/alif_libjpeg-turbo/jcparam.c
+        - file: ../libs/alif_libjpeg-turbo/jcphuff.c
+        - file: ../libs/alif_libjpeg-turbo/jcprepct.c
+        - file: ../libs/alif_libjpeg-turbo/jcsample.c
+        - file: ../libs/alif_libjpeg-turbo/jctrans.c
+        - file: ../libs/alif_libjpeg-turbo/jdapimin.c
+        - file: ../libs/alif_libjpeg-turbo/jdapistd.c
+        - file: ../libs/alif_libjpeg-turbo/jdatadst.c
+        - file: ../libs/alif_libjpeg-turbo/jdatasrc.c
+        - file: ../libs/alif_libjpeg-turbo/jdcoefct.c
+        - file: ../libs/alif_libjpeg-turbo/jdcolor.c
+        - file: ../libs/alif_libjpeg-turbo/jddctmgr.c
+        - file: ../libs/alif_libjpeg-turbo/jdhuff.c
+        - file: ../libs/alif_libjpeg-turbo/jdicc.c
+        - file: ../libs/alif_libjpeg-turbo/jdinput.c
+        - file: ../libs/alif_libjpeg-turbo/jdmainct.c
+        - file: ../libs/alif_libjpeg-turbo/jdmarker.c
+        - file: ../libs/alif_libjpeg-turbo/jdmaster.c
+        - file: ../libs/alif_libjpeg-turbo/jdmerge.c
+        - file: ../libs/alif_libjpeg-turbo/jdphuff.c
+        - file: ../libs/alif_libjpeg-turbo/jdpostct.c
+        - file: ../libs/alif_libjpeg-turbo/jdsample.c
+        - file: ../libs/alif_libjpeg-turbo/jdtrans.c
+        - file: ../libs/alif_libjpeg-turbo/jerror.c
+        - file: ../libs/alif_libjpeg-turbo/jfdctflt.c
+        - file: ../libs/alif_libjpeg-turbo/jfdctfst.c
+        - file: ../libs/alif_libjpeg-turbo/jfdctint.c
+        - file: ../libs/alif_libjpeg-turbo/jidctflt.c
+        - file: ../libs/alif_libjpeg-turbo/jidctfst.c
+        - file: ../libs/alif_libjpeg-turbo/jidctint.c
+        - file: ../libs/alif_libjpeg-turbo/jidctred.c
+        - file: ../libs/alif_libjpeg-turbo/jquant1.c
+        - file: ../libs/alif_libjpeg-turbo/jquant2.c
+        - file: ../libs/alif_libjpeg-turbo/jutils.c
+        - file: ../libs/alif_libjpeg-turbo/jmemmgr.c
+        - file: ../libs/alif_libjpeg-turbo/jmemnobs.c
+        - file: ../libs/alif_libjpeg-turbo/jsimd_none.c
+        - file: ../libs/alif_libjpeg-turbo/jaricom.c
+        #- file: ../libs/alif_libjpeg-turbo/jcarith.c
+        #- file: ../libs/alif_libjpeg-turbo/jdarith.c
+    - group: libjpeg-turbo-simd
+      files:
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jccolor-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jcgray-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jchuff-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jcphuff-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jcsample-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jdcolor-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jdmerge-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jdsample-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jfdctfst-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jfdctint-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jfdctflt-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jidctfst-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jidctint-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jidctflt-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jidctred-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jquantf-helium.c
+        - file: ../libs/alif_libjpeg-turbo/simd/arm-m/jquanti-helium.c
+
   misc:
     - ASM:
       - -include "Pre_Include_Global.h"
@@ -31,6 +105,8 @@ project:
     - ../libs/board/
     - ../libs/common_app_utils/logging
     - ../libs/common_app_utils/fault_handler
+    - ../libs/alif_libjpeg-turbo
+
   components:
     # needed for Alif Ensemble support
     - component: AlifSemiconductor::Device:Startup&C Startup

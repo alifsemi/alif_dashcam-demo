@@ -1,26 +1,33 @@
-/* Copyright (C) 2023 Alif Semiconductor - All Rights Reserved.
- * Use, distribution and modification of this code is permitted under the
- * terms stated in the Alif Semiconductor Software License Agreement
- *
- * You should have received a copy of the Alif Semiconductor Software
- * License Agreement with this file. If not, please write to:
- * contact@alifsemi.com, or visit: https://alifsemi.com/license
- *
- */
+/* Copyright (C) 2023-2025 Alif Semiconductor - All Rights Reserved.
+* Use, distribution and modification of this code is permitted under the
+* terms stated in the Alif Semiconductor Software License Agreement
+*
+* You should have received a copy of the Alif Semiconductor Software
+* License Agreement with this file. If not, please write to:
+* contact@alifsemi.com, or visit: https://alifsemi.com/license
+*
+*/
 
 /**************************************************************************//**
- * @brief    Write image in BMP format using Azure FileX
- ******************************************************************************/
+* @brief    Write image in BMP format using Azure FileX
+******************************************************************************/
 
 #ifndef BMP_WRITE_H
 #define BMP_WRITE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "fx_api.h"
+#include "jpeglib.h"
 
 #define ROW_BUFFER_SIZE (1024 * 64)
-static uint8_t rowbuffer[ROW_BUFFER_SIZE] __attribute__((section(".bss.camera_frame_bayer_to_rgb_buf"))) __attribute__((aligned(32)));
+static uint8_t rowbuffer[ROW_BUFFER_SIZE] __attribute__((section("sd_dma_buf"))) __attribute__((aligned(32)));
 
 #pragma pack(1)
 typedef struct
@@ -62,13 +69,12 @@ void write_le16(uint8_t *dst, uint16_t value)
 }
 
 /**
-  \fn           bmp_write
-  \brief        initialize host controller
-  \param[in]    image_file Readily opened FileX handle
-  \param[in]    pixel_data RGB pixel data (3bytes per pixel, no alpha channel)
-  \param[in]    width Image width (pixels)
-  \param[in]    width Image height (pixels)
-  */
+ \fn           bmp_write
+\param[in]    image_file Readily opened FileX handle
+\param[in]    pixel_data RGB pixel data (3bytes per pixel, no alpha channel)
+\param[in]    width Image width (pixels)
+\param[in]    width Image height (pixels)
+*/
 bool bmp_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_t height)
 {
     bmp_file_header_t file_header;
@@ -141,4 +147,145 @@ bool bmp_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_
     return ret;
 }
 
-#endif // BMP_WRITE_H
+// Callback functions for libjpeg to write using FILEX
+static void jpeg_write_callback_init_destination(j_compress_ptr cinfo)
+{
+    cinfo->dest->next_output_byte = rowbuffer;
+    cinfo->dest->free_in_buffer = sizeof(rowbuffer);
+}
+
+static boolean jpeg_write_callback_empty_output_buffer(j_compress_ptr cinfo)
+{
+    FX_FILE *image_file = (FX_FILE *)cinfo->client_data;
+    int ret = fx_file_write(image_file, rowbuffer, sizeof(rowbuffer)) == FX_SUCCESS ? 1 : 0;
+    cinfo->dest->next_output_byte = rowbuffer;
+    cinfo->dest->free_in_buffer = sizeof(rowbuffer);
+    return ret;
+}
+
+static void jpeg_write_callback_term_destination(j_compress_ptr cinfo)
+{
+    FX_FILE *image_file = (FX_FILE *)cinfo->client_data;
+    fx_file_write(image_file, rowbuffer, sizeof(rowbuffer) - cinfo->dest->free_in_buffer);
+}
+
+/**
+ \fn           jpeg_write
+\param[in]    image_file Readily opened FileX handle
+\param[in]    pixel_data RGB pixel data (3bytes per pixel, no alpha channel)
+\param[in]    width Image width (pixels)
+\param[in]    width Image height (pixels)
+*/
+bool jpeg_write(FX_FILE *image_file, uint8_t *pixel_data, uint32_t width, uint32_t height)
+{
+    struct jpeg_destination_mgr dest_mgr;
+    struct jpeg_error_mgr jerr;
+    struct jpeg_compress_struct cinfo;
+    memset(&dest_mgr, 0, sizeof(dest_mgr));
+    memset(&jerr, 0, sizeof(jerr));
+    memset(&cinfo, 0, sizeof(cinfo));
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+
+    cinfo.image_width = width;
+    cinfo.image_height = height;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_RGB;
+
+    jpeg_set_defaults(&cinfo);
+
+    cinfo.dct_method = JDCT_FLOAT;
+    jpeg_set_quality(&cinfo, 85, TRUE);
+
+    dest_mgr.init_destination = &jpeg_write_callback_init_destination;
+    dest_mgr.empty_output_buffer = &jpeg_write_callback_empty_output_buffer;
+    dest_mgr.term_destination = &jpeg_write_callback_term_destination;
+    cinfo.dest = &dest_mgr;
+    cinfo.client_data = (void*)image_file;
+
+    jpeg_start_compress(&cinfo, TRUE);
+
+    while (cinfo.next_scanline < cinfo.image_height) {
+        JSAMPROW jsamp = pixel_data + (cinfo.next_scanline % cinfo.image_height) * width * 3;
+        jpeg_write_scanlines(&cinfo, &jsamp, 1);
+    }
+
+    jpeg_finish_compress(&cinfo);
+    jpeg_destroy_compress(&cinfo);
+
+    return cinfo.err->msg_code == 0;
+}
+
+typedef enum {
+    ImageFormat_BMP,
+    ImageFormat_JPEG
+} ImageFormat;
+
+bool save_image(FX_MEDIA* sd_card, char* filename, ImageFormat format, uint8_t *pixel_data, uint32_t width, uint32_t height)
+{
+    uint32_t status = fx_file_create(sd_card, filename);
+
+    /* Check the create status.  */
+    if (status != FX_SUCCESS &&
+        status != FX_ALREADY_CREATED) // Allow overwriting previous image
+    {
+        printf("Failed creating '%s' status=%u\n", filename, status);
+        return false;
+    }
+
+    FX_FILE image_file;
+    status = fx_file_open(sd_card, &image_file, filename, FX_OPEN_FOR_WRITE);
+    if (status != FX_SUCCESS)
+    {
+        printf("Failed opening '%s' status=%u\n", filename, status);
+        return false;
+    }
+
+    status = fx_file_seek(&image_file, 0);
+    if (status != FX_SUCCESS)
+    {
+        printf("Failed seeking '%s' status=%u\n", filename, status);
+        return false;
+    }
+
+    if (format == ImageFormat_BMP) {
+        if (!bmp_write(&image_file, pixel_data, width, height)) {
+            printf("Failed writing '%s' in BMP format\n", filename);
+            fx_file_close(&image_file);
+            return false;
+        }
+    } else if (format == ImageFormat_JPEG) {
+        if (!jpeg_write(&image_file, pixel_data, width, height)) {
+            printf("Failed writing '%s' in JPEG format\n", filename);
+            fx_file_close(&image_file);
+            return false;
+        }
+    } else {
+        printf("Unknown image format\n");
+        return false;
+    }
+
+    status = fx_file_close(&image_file);
+    if (status != FX_SUCCESS)
+    {
+        printf("Failed closing '%s' status=%u\n", filename, status);
+        return false;
+    }
+
+    status = fx_media_flush(sd_card);
+    if (status != FX_SUCCESS)
+    {
+        printf("Failed media flush status=%u\n", status);
+        return false;
+    }
+
+    printf("Successfully wrote '%s'\n", filename);
+    return true;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // BMP_WRITE_H 
