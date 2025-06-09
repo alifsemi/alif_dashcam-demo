@@ -2,20 +2,27 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "type": "cmsis-csolution.build",
+            "solution": "${command:cmsis-csolution.getSolutionPath}",
+            "rebuild": false,
+            "problemMatcher": [],
+            "label": "cmsis-csolution.build: Build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "Clean all (including YML build files)",
             "type": "shell",
+            "command": [
+                "cbuild ${command:cmsis-csolution.getSolutionPath} --clean;",
+                "rm -f ./dashcam/*.cbuild.yml;"
+            ],
             "windows": {
                 "command": [
                     "cbuild ${command:cmsis-csolution.getSolutionPath} --clean;",
-                    "rm -Force ./dashcam/*.cbuild.yml;",
-                    "rm -Force ./dashcam/*.cprj;",
-                ]
-            },
-            "linux": {
-                "command": [
-                    "cbuild ${command:cmsis-csolution.getSolutionPath} --clean;",
-                    "rm -f ./dashcam/*.cbuild.yml;",
-                    "rm -f ./dashcam/*.cprj;",
+                    "rm -Force ./dashcam/*.cbuild.yml;"
                 ]
             },
             "problemMatcher": []
@@ -26,8 +33,8 @@
             "command": [
                 "cpackget init https://www.keil.com/pack/index.pidx;",
                 "cpackget add https://github.com/ARM-software/CMSIS_6/releases/download/v6.0.0/ARM.CMSIS.6.0.0.pack;",
-                "cpackget add https://github.com/alifsemi/alif_ensemble-cmsis-dfp/releases/download/v1.1.3/AlifSemiconductor.Ensemble.1.1.3.pack;",
-                "cpackget add https://github.com/alifsemi/alif_ensemble-Azure-RTOS/releases/download/v1.1.0/AlifSemiconductor.AzureRTOS.1.1.0.pack;",
+                "cpackget add https://github.com/alifsemi/alif_ensemble-cmsis-dfp/releases/download/v1.3.4/AlifSemiconductor.Ensemble.1.3.4.pack;",
+                "cpackget add https://github.com/alifsemi/alif_ensemble-Azure-RTOS/releases/download/v1.3.0/AlifSemiconductor.AzureRTOS.1.3.0.pack;",
                 "cpackget list;",
                 "echo 'Pack installation has been completed'"
             ],
@@ -36,18 +43,16 @@
         {
             "label": "Prepare program with Security Toolkit",
             "type": "shell",
+            "command": [
+                    "outputElfFilename='${command:cmsis-csolution.getBinaryFile}';",
+                    "cp \"${outputElfFilename/%???/bin}\" '${config:alif.setools.root}/build/images/alif-img.bin';",
+                    "cp './.alif/${command:cmsis-csolution.getProcessorName}_cfg.json' '${config:alif.setools.root}/alif-img.json';"
+                ],
             "windows": {
                 "command": [
                     "$outputElfFilename='${command:cmsis-csolution.getBinaryFile}';",
                     "$outputBinFilename=${outputElfFilename}.Substring(0, $outputElfFilename.Length -3) + 'bin';",
                     "cp \"$outputBinFilename\" '${config:alif.setools.root}/build/images/alif-img.bin';",
-                    "cp './.alif/${command:cmsis-csolution.getProcessorName}_cfg.json' '${config:alif.setools.root}/alif-img.json';"
-                ]
-            },
-            "linux": {
-                "command": [
-                    "outputElfFilename='${command:cmsis-csolution.getBinaryFile}';",
-                    "cp \"${outputElfFilename/%???/bin}\" '${config:alif.setools.root}/build/images/alif-img.bin';",
                     "cp './.alif/${command:cmsis-csolution.getProcessorName}_cfg.json' '${config:alif.setools.root}/alif-img.json';"
                 ]
             },

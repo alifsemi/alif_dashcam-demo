@@ -18,9 +18,6 @@
 #include "RTE_Components.h"
 #include CMSIS_device_header
 
-// Needed for sd_uninit()
-#include "sd.h"
-
 #include "Driver_GPIO.h"
 #include "Driver_CPI.h"    // Camera
 #include "board.h"
@@ -28,7 +25,6 @@
 #include "bayer.h"
 #include "image_processing.h"
 #include "power_management.h"
-#include "sd_pinconf.h"
 #include "power.h"
 
 #include "se_services_port.h"
@@ -292,10 +288,6 @@ void snapshot_thread_entry(ULONG args)
         fx_media_close(&sd_card);
     }
 
-    if (sd_uninit(0) != SD_DRV_STATUS_OK) {
-        printf("SD uninit failed\n");
-    }
-
     printf("Prepare for stop\n");
     CAMERAdrv->Stop();
     CAMERAdrv->PowerControl(ARM_POWER_OFF);
@@ -334,8 +326,6 @@ void tx_application_define(void *first_unused_memory){
 int main (void)
 {
     BOARD_Pinmux_Init();
-
-    set_SD_card_pinconf();
 
     PM_RESET_STATUS last_reset_reason = pm_get_subsystem_reset_status();
 

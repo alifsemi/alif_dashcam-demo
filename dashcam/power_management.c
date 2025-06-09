@@ -77,18 +77,10 @@ uint32_t set_power_profiles(void)
 
     default_runprof.vdd_ioflex_3V3  = IOFLEX_LEVEL_1V8;
 
-    // for SE 1.0.94 
-    default_runprof.ewic_cfg        = EWIC_VBAT_GPIO | EWIC_VBAT_TIMER;
-    default_runprof.wakeup_events   = WE_LPGPIO | WE_LPTIMER;
 #ifdef CORE_M55_HP
     default_runprof.cpu_clk_freq    = CLOCK_FREQUENCY_400MHZ;
-    // for SE 1.0.94 
-    default_runprof.vtor_address    = 0x80100000;
-    default_runprof.vtor_address_ns = 0x80100000;
 #elif CORE_M55_HE
     default_runprof.cpu_clk_freq    = CLOCK_FREQUENCY_160MHZ;
-    default_runprof.vtor_address    = 0x80000000;
-    default_runprof.vtor_address_ns = 0x80000000;
 #else
 #error Unsupported core
 #endif
@@ -104,15 +96,14 @@ uint32_t set_power_profiles(void)
         default_offprof.stby_clk_freq   = SCALED_FREQ_RC_STDBY_38_4_MHZ;
         // default_offprof.sysref_clk_src = /* SoC Reference Clock shared with all subsystems */
         default_offprof.memory_blocks   = SERAM_MASK | MRAM_MASK;
-        default_offprof.memory_blocks   |= SRAM1_MASK;
         default_offprof.ip_clock_gating = LP_PERIPH_MASK;
         default_offprof.phy_pwr_gating  = 0;
         default_offprof.vdd_ioflex_3V3  = IOFLEX_LEVEL_1V8;
         default_offprof.wakeup_events   = WE_LPGPIO | WE_LPTIMER;
         default_offprof.ewic_cfg        = EWIC_VBAT_GPIO | EWIC_VBAT_TIMER;
 #ifdef CORE_M55_HP
-        default_offprof.vtor_address    = 0x80100000;
-        default_offprof.vtor_address_ns = 0x80100000;
+        default_offprof.vtor_address    = 0x80200000;
+        default_offprof.vtor_address_ns = 0x80200000;
 #elif CORE_M55_HE
         default_offprof.vtor_address    = 0x80000000;
         default_offprof.vtor_address_ns = 0x80000000;
