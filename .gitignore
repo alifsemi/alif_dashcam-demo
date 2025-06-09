@@ -1,5 +1,6 @@
 out/
-RTE/
 tmp/
-*.yml
-*.cprj
+*.cbuild-idx.yml
+*.cbuild-set.yml
+*.cbuild.yml
+*.clangd
