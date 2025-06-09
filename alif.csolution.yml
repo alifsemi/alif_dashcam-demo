@@ -29,7 +29,7 @@ solution:
 
   build-types:
     - type: debug
-      optimize: none
+      optimize: balanced
       debug: on
       define:
         - _DEBUG

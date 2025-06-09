@@ -186,57 +186,6 @@ void clock_init(bool enable)
 }
 
 
-bool save_image(char* filename, uint8_t *pixel_data, uint32_t width, uint32_t height)
-{
-    uint32_t status = fx_file_create(&sd_card, filename);
-
-    /* Check the create status.  */
-    if (status != FX_SUCCESS &&
-        status != FX_ALREADY_CREATED) // Allow overwriting previous image
-    {
-        printf("Failed creating '%s' status=%u\n", filename, status);
-        return false;
-    }
-
-    FX_FILE image_file;
-    status = fx_file_open(&sd_card, &image_file, filename, FX_OPEN_FOR_WRITE);
-    if (status != FX_SUCCESS)
-    {
-        printf("Failed opening '%s' status=%u\n", filename, status);
-        return false;
-    }
-
-    status = fx_file_seek(&image_file, 0);
-    if (status != FX_SUCCESS)
-    {
-        printf("Failed seeking '%s' status=%u\n", filename, status);
-        return false;
-    }
-
-    if (!bmp_write(&image_file, pixel_data, width, height)) {
-        printf("Failed writing '%s' in BMP format\n", filename);
-        fx_file_close(&image_file);
-        return false;
-    }
-
-    status = fx_file_close(&image_file);
-    if (status != FX_SUCCESS)
-    {
-        printf("Failed closing '%s' status=%u\n", filename, status);
-        return false;
-    }
-
-    status = fx_media_flush(&sd_card);
-    if (status != FX_SUCCESS)
-    {
-        printf("Failed media flush status=%u\n", status);
-        return false;
-    }
-
-    printf("Successfully wrote '%s'\n", filename);
-    return true;
-}
-
 void snapshot_thread_entry(ULONG args)
 {
     int ret = 0;
@@ -272,13 +221,14 @@ void snapshot_thread_entry(ULONG args)
         white_balance(CAM_FRAME_WIDTH, CAM_FRAME_HEIGHT, image_buffer, image_buffer);
 
         BOARD_LED1_Control(BOARD_LED_STATE_LOW);
-        printf("got frame id=%u\n", frame_id);
         
         if (fx_media_status == FX_SUCCESS) {
             char filename[32];
-            snprintf(filename, 32, "frame_%06u.bmp", frame_id);
+            snprintf(filename, 32, "frame_%06u.jpg", frame_id);
             BOARD_LED2_Control(BOARD_LED_STATE_HIGH);
-            save_image(filename, image_buffer, CAM_FRAME_WIDTH, CAM_FRAME_HEIGHT);
+            if (!save_image(&sd_card, filename, ImageFormat_JPEG, image_buffer, CAM_FRAME_WIDTH, CAM_FRAME_HEIGHT)) {
+                printf("Failed writing '%s' in JPEG format\n", filename);
+            }
             BOARD_LED2_Control(BOARD_LED_STATE_LOW);
         }
     }

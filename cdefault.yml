@@ -6,6 +6,8 @@ default:
         - -std=c99
         - -fdata-sections
         - -mcmse
+        - -Wno-incompatible-pointer-types
+        - -flax-vector-conversions
 
       Link:
         - --specs=nosys.specs
